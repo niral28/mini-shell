@@ -1,0 +1,72 @@
+
+  //OLD METHOD:
+  //actually execute the command:
+  /* int runCommand(string & cmd, vector<char *> & argv, int argc){ */
+  /*   pid_t  cpid ,w; */
+  /*   int wstatus; */
+  /*   char ** data= NULL; */
+  /*   vector< vector<int> > open_fd; */
+    
+  /*   //built-in commands section (don't fork): */
+  /*   if(cmd.compare("exit") ==0 || cmd.compare("cd") == 0 || cmd.compare("set") == 0 || cmd.compare("export") == 0){ */
+  /*       return builtInCommands(cmd, argv,argc); */
+  /*   }else{ // non built-in functions */
+  /*     //citation: code below modified from waitpid manpage */
+  /* 	  cpid = fork(); */
+  /* 	  if(cpid == -1){ */
+  /* 	    perror("fork"); */
+  /* 	    exit(EXIT_FAILURE); */
+  /* 	  } */
+  /* 	  //child pid stuff: */
+  /* 	  if(cpid ==0){  */
+  /* 	    // run_command(argv, open_fd); */
+  /* 	   if(cmd.size() <1){ */
+  /* 	      cerr << "not enough arguments\n"; */
+  /* 	      exit(EXIT_FAILURE); */
+  /* 	    }else if(cmd.compare("exit") ==0){ */
+  /* 	      exit(EXIT_FAILURE); */
+  /* 	      //exit(EXIT_SUCCESS); */
+  /* 	    } */
+  /* 	   open_fd.push_back(redirect(cmd,argv,argc)); */
+  /* 	    data = new char *[argc+1]; */
+  /* 	    for(int i=0; i<argc; i++){ */
+  /* 	      data[i] = argv.at(i); */
+  /* 	    } */
+  /* 	    data[argc] = NULL; */
+	    
+  /* 	    //if path specified in command, let it run */
+  /* 	    if(cmd.find("/") != string::npos){ */
+  /* 	      execve(cmd.c_str(), data, environ); */
+  /* 	      destroy(argv); */
+  /* 	      perror("execve"); */
+  /* 	      exit(EXIT_FAILURE); */
+  /* 	    }else{ // else search PATH variable for command */
+  /* 	      pair<vector<char*>, int> env_props = get_env_fp(); */
+  /* 	      string full_cmd = find_cmd(env_props.first, cmd, env_props.second); */
+  /* 	      execve(full_cmd.c_str(), data, environ); */
+  /* 	      perror("execve"); */
+  /* 	      destroy(argv); */
+  /* 	      exit(EXIT_FAILURE); */
+  /* 	    } */
+	    
+  /* 	  }else{ // parent pid stuff: */
+  /* 	    do{ */
+  /* 	      w = waitpid(cpid,&wstatus, WUNTRACED | WCONTINUED); */
+  /* 	      if(w == -1){ */
+  /* 		perror("waitpid"); */
+  /* 		delete(data); */
+  /* 		exit_gracefully(argv,""); */
+  /* 	      } */
+  /* 	      if(WIFEXITED(wstatus)){ */
+  /* 		cerr << "Program exited with status " << WEXITSTATUS(wstatus)<<"\n" ; */
+  /* 	      }else if(WIFSIGNALED(wstatus)){ */
+  /* 		cerr<< "Program was killed by signal " <<WTERMSIG(wstatus)<<"\n" ;  */
+  /* 	      } */
+  /* 	    }while(!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus)); */
+  /* 	    delete(data); */
+  /* 	    destroy(argv); */
+  /* 	  return wstatus; */
+  /* 	} */
+  /*   } */
+  /* 	return 0; */
+  }

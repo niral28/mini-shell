@@ -1,0 +1,472 @@
+Niral Shah
+ECE 551
+Professor Hilton
+
+
+I. Overview of relevant code files:
+  -  myShell.h -> contains a class (MyShell) created to maintain shell variables
+     and to implement shell behavior (all 4 steps implemented).
+  - utils.h -> contains several helper methods that do not use any member variables
+     of the class MyShell()
+  - myShell.cpp -> the driver (contains the main, creates a MyShell object and
+     calls its readInput method.
+
+Notable Assumptions:
+  - require user to set variables before exporting
+  - require whitespace for redirection and pipe arguments
+  - others may be explained in the test case sections
+  
+II. Running the program & Testing:
+
+In order to run this program do the following steps:
+1. run make
+2. in your terminal type ./myShell 
+3. You should be greeted with a prompt
+4. Now you may begin to run the test cases
+
+Note: Please run test cases manually in interactive mode (running ./myShell, from the terminal)
+
+III. Test Cases:
+ Note: Testcases are section by Step number
+--------------------------------------------------
+Section: Step 1 Testcases:
+--------------------------------------------------
+1. Testing simple command (/bin/echo):
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $/bin/echo hello
+hello
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject $
+
+Reason:
+This output is correct as echo simply outputs its arguments to stdout.
+
+2. Command does not exist:
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $ sdfs
+Command sdfs not found
+Program exited with status 1
+myShell:/home/ns247/ece551/mp_miniproject $
+
+Reason:
+This replicates bash's behavior, outputing command not found if command not found
+in specified path or in PATH
+
+3. Giving false path for command
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $ /sdfsf
+execve: No such file or directory
+Program exited with status 1
+myShell:/home/ns247/ece551/mp_miniproject $
+
+Reason:
+My code checks if the '/' character is specified in the first argument to decide whether
+to search the PATH variable for the command or use the user provided absolute path.
+This verifies that even if file does not exist the shell does not crash.
+
+4. Raising a kill signal
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $ ls | cat <sfdsf
+cat: '<sfdsf': No such file or directory
+Program was killed by signal 13
+myShell:/home/ns247/ece551/mp_miniproject $
+
+Reason:
+ls | cat<sfsf (note: my shell's implementation of pipe requires whitespace) is an illegal command.
+In this case the stdin from ls was ignored and cat attempted to read from the redirection. Though
+since sfdsf is not a real file it caused a signal 13. This testcase shows the shell is robust and
+will not crash due to illegal commands.
+
+5. Typing in exit
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $ exit
+ns247@ece551:~/ece551/mp_miniproject$
+
+Reason:
+This correctly ends the MyShell process and frees up all memory. As a result it returns back to its parent process, which happens to be the bash shell.
+--------------------------------------------------
+Section: Step 2:
+--------------------------------------------------
+6. Searching the PATH variable for command
+---------------------------------------
+6a: Find command in the /bin directory
+myShell:/home/ns247/ece551/mp_miniproject $ls
+commandShell.txt  Makefile  myShell.cpp  myShell_wip   output.txt  testcases	TESTING.txt~
+large_file.dat	    myShell   myShell.h	  numerics.txt  README	      TESTING.txt	utils.h
+Program exited with status 0
+
+Reason:
+This successfully executes a command found in the PATH environmental variable (env). In this case this found in the /bin directory
+
+6b. Find command in the /sbin directory
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $ ifconfig
+docker0   Link encap:Ethernet  HWaddr 02:42:f0:42:5c:c4
+          inet addr:172.17.0.1  Bcast:0.0.0.0  Mask:255.255.0.0
+	  inet6 addr: fe80::42:f0ff:fe42:5cc4/64 Scope:Link
+	  UP BROADCAST MULTICAST  MTU:1500  Metric:1
+	  RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+	  TX packets:31 errors:0 dropped:0 overruns:0 carrier:0
+	  collisions:0 txqueuelen:0
+          RX bytes:0 (0.0 B)  TX bytes:2738 (2.7 KB)
+
+eth0      Link encap:Ethernet  HWaddr 00:50:56:a1:05:5d
+          inet addr:152.3.77.223  Bcast:152.3.77.255  Mask:255.255.255.0
+	  inet6 addr: fe80::250:56ff:fea1:55d/64 Scope:Link
+	  UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:102764205 errors:0 dropped:310739 overruns:0 frame:0
+          TX packets:82678671 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000
+	   RX bytes:9137040985 (9.1 GB)  TX bytes:37018616177 (37.0 GB)
+
+lo        Link encap:Local Loopback
+          inet addr:127.0.0.1  Mask:255.0.0.0
+	  inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:65536  Metric:1
+	  RX packets:1452578 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:1452578 errors:0 dropped:0 overruns:0 carrier:0
+	  collisions:0 txqueuelen:1
+          RX bytes:456946532 (456.9 MB)  TX bytes:456946532 (456.9 MB)
+Program exited with status 0
+
+Reason:
+This test case is here to prove that commands are found beyond the /bin directory and my program is in fact searching the $PATH variable directories
+
+7. Escaped whitespace:
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $echo \     hello
+     hello
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject $
+
+Reason:
+This test case demonstrates how echo escapes the leading whitespace in front of hello
+
+8. Escaped whitespace variables:
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $set var \        hello      world
+myShell:/home/ns247/ece551/mp_miniproject $echo $var
+        hello      world
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject 
+
+Reason:
+This testcase escapes the whitespace in front hello  world. (Typically when setting variables I ignore leading whitespace.)
+
+--------------------------------------------------
+Section Step 3:
+--------------------------------------------------
+
+9. Testing the cd (change directory) command:
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $ cd ..
+myShell:/home/ns247/ece551 $cd /
+myShell:/ $ls
+bin  boot  dev	etc  home  initrd.img  initrd.img.old  lib  lib64  media  mnt  opt  proc  root	run  sbin  srv	sys  tmp  usr  var  vmlinuz  vmlinuz.old
+Program exited with status 0
+myShell:/ $ cd ~
+myShell:/home/ns247 $
+
+Reason:
+This testcase tests changing several directories (going up and down the filesystem). This is also verifies that the prompt shows the correct file path
+Note: I love using the ~ symbol to get to the home directory so I implemented it for the cd command only.
+
+10. cd to a directory that does not exist:
+---------------------------------------
+myShell:/home/ns247 $ cd /home/ns247/bad
+cd to  /home/ns247/bad failed : No such file or directory
+myShell:/home/ns247 $
+
+Reason:
+This replicates bash's behavior by outputting an error to the user. 
+
+11. Typing nothing next to cd (only 1 arg specified) :
+---------------------------------------
+myShell:/home/ns247 $ cd
+only 1 argument specified
+myShell:/home/ns247 $
+
+Reason:
+I require 2 arguments for cd to work
+
+12. Specifiying more than 2 arguments to cd:
+---------------------------------------
+myShell:/home/ns247 $ cd ~ /home/ns247/ece551
+myShell:/home/ns247 $
+
+Reason:
+My implementation of cd ignores all arguments have the second arg (the arg after the command).
+
+13. Set a variable:
+---------------------------------------
+myShell:/home/ns247 $ set var 123
+myShell:/home/ns247 $ echo $var
+123
+Program exited with status 0
+myShell:/home/ns247 $
+
+Reason:
+Behaves as specified
+
+14. Using illegal characters in variable name:
+---------------------------------------
+myShell:/home/ns247 $ set @123 sfsf
+invalid variable name!
+myShell:/home/ns247 $
+
+Reason:
+ Variables may have any character a-z, A-Z, 0-9, _ . All others are considered illegal.
+
+15. Verifying variable names are case sensitive+ multiple variables in same arg:
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $ set var 123
+myShell:/home/ns247/ece551/mp_miniproject $ set VAR abc
+myShell:/home/ns247/ece551/mp_miniproject $ echo $var...$VAR
+123...abc
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject $
+
+Reason:
+  This test case shows that var and VAR are treated as two different variables.
+  Futhermore this test cases shows that multiple variables may be expanded in the same argument.
+
+16. Expanded variables within a phrase
+(continued from previous where $var is set to 123)
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $echo aaaa$var
+aaaa123
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject $
+
+Reason:
+  This shows that in the argument aaaa$var, $var is correctly expanded to 123.
+  Thus the output aaaa$var is correct.
+
+17. Another variable next to variable test case
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $ echo $var$var
+123123
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject $
+
+Reason:
+Continues to verify that variables are expanded correctly. 
+
+18. Setting/Updating the PATH variable:
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $ set PATH $PATH:/home/ns247/ece551
+myShell:/home/ns247/ece551/mp_miniproject $ echo $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/home/ns247/ece551
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject $
+
+Reason:
+ Shows that the PATH variable may be updated. Note in this implementation, I require the user to set a variable
+ before exporting it.
+
+19. (Continued from 18) Export PATH variable:
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $ export PATH
+myShell:/home/ns247/ece551/mp_miniproject $env
+XDG_SESSION_ID=31429
+TERM=xterm-256color
+SHELL=/bin/bash
+SSH_CLIENT=107.15.253.77 59527 22
+SSH_TTY=/dev/pts/118
+USER=ns247
+LS_COLORS=.....px=00;36:*.xspf=00;36: //I deleted output here to make it appear cleaner
+MAIL=/var/mail/ns247
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/home/ns247/ece551
+PWD=/home/ns247/ece551/mp_miniproject
+EDITOR=emacs -nw
+LANG=en_US.UTF-8
+SHLVL=1
+HOME=/home/ns247
+LOGNAME=ns247
+VISUAL=emacs -nw
+SSH_CONNECTION=107.15.253.77 59527 152.3.77.223 22
+LESSOPEN=| /usr/bin/lesspipe %s
+XDG_RUNTIME_DIR=/run/user/1101
+LESSCLOSE=/usr/bin/lesspipe %s %s
+_=./myShell
+OLDPWD=/home/ns247/ece551
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject $
+
+Reason:
+  This shows that the PATH environmental variable is correctly updated and exported and can be found in the enviornmental variable list updated.
+
+20. Updating PATH variable and running command found in new path
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $set PATH $PATH:/home/ns247/ece551/mp_miniproject
+myShell:/home/ns247/ece551/mp_miniproject $export PATH
+myShell:/home/ns247/ece551/mp_miniproject $ myShell
+myShell:/home/ns247/ece551/mp_miniproject $exit
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject
+
+Reason:
+ After updating the PATH variable to include the path to the miniproject we should be able to simply type myShell to run
+ our shell within a shell. It indeed does that (as indicated by the exit statement)
+
+--------------------------------------------------
+Section Step 4:
+--------------------------------------------------
+
+21. Testing Redirection to stdout and stderr
+---------------------------------------
+
+myShell:/home/ns247/ece551/mp_miniproject $echo hello_world > test.txt 2> err_test.txt
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject $ls
+commandShell.txt  large_file.dat  myShell      myShell.h    numerics.txt  README     #TESTING.txt#  TESTING.txt~  utils.h
+err_test.txt	    Makefile	    myShell.cpp  myShell_wip  output.txt    testcases  TESTING.txt    test.txt	    utils.h~
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject $cat err_test.txt
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject $cat test.txt
+hello_world
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject $
+
+Reason:
+  First note my redirection implementation requires spaces between the arguments. This works correctly
+  because it creates both test.txt and err_test.txt which did not exist prior. cat'ing the files shows
+  that the both contain the correct output (there's no error output and test contains hello_world)
+
+22. Testing Redirection from stdin and stdout 
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $ls > file_list.txt
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject $wc < file_list.txt
+ 20  20 222
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject $
+
+Reason:
+  This correctly writes the output to ls into a file called file_list.txt
+  Then subsequently it executes the wc command by reading the file_list.txt
+  inplace of stdin
+
+23. Bad Redirection (file does not exist)
+---------------------------------------
+
+myShell:/home/ns247/ece551/mp_miniproject $ sort < sdfsf 2> err.txt
+Program exited with status 2
+myShell:/home/ns247/ece551/mp_miniproject $ cat err.txt
+sort: cannot read: '<': No such file or directory
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject $
+
+Reason:
+  This behaved correctly because sdfsf is a file that did not exist
+  thus the sort command failed and all error output was sent to err.txt,
+  which was correctly written.
+
+24. Pipe (1 pipe)
+---------------------------------------
+
+myShell:/home/ns247/ece551/mp_miniproject $ls | head
+commandShell.txt
+err_test.txt
+file_list.txt
+hello
+large_file.dat
+Makefile
+myShell
+myShell.cpp
+myShell.h
+myShell_wip
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject $
+
+Reason:
+  This correctly outputs just the first 10 files in my directory
+
+
+25. Bad Pipe/Contradictory Input 
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $ ls | cat < test.txt
+hello_world
+Program was killed by signal 13
+myShell:/home/ns247/ece551/mp_miniproject $
+
+Reason:
+  In this there is contradictory input coming from ls and from the file test.txt (which simply contains the word hello_world).
+  As a result this is handled by implementing the command for cat and then killed. 
+
+26. Testing Multiple Pipes
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $ls | sort | head | grep myShell 
+myShell
+myShell.cpp
+myShell.h
+myShell_wip
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject $
+
+Reason:
+  This correctly takes output from ls, sorts the directory list, limits it the first
+  10 files and then searches myShell in this list
+
+27. More Complex Pipe statements
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $ ls | sort -r | grep myShell.h 2> err.txt > output.txt
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject $cat output.txt
+myShell.h
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject $
+
+Reason:
+  This output behaves just as it would in bash.
+
+28. Invalid complex pipe statements:
+---------------------------------------
+
+myShell:/home/ns247/ece551/mp_miniproject $ls | sort -r | grep < README 2> err.txt > output.txt
+Program exited with status 2
+myShell:/home/ns247/ece551/mp_miniproject $ cat err.txt
+Usage: grep [OPTION]... PATTERN [FILE]...
+Try 'grep --help' for more information.
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject $cat output.txt
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject $
+
+Reason:
+ This behaves correctly as the err message gets printed to err.txt, nothing gets printed
+ to output since this is invalid command and it correctly exits.
+
+29. Useful pipe statment:
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $ps aux | grep ns247
+ns247     99895  0.0  0.5 393808 11972 pts/118  TNl  22:37   0:00 emacs myShell.h
+ns247    118774  0.0  0.1  13348  3084 pts/118  SN+  22:50   0:00 ./myShell
+ns247    124035  0.0  0.1  37364  3276 pts/118  RN+  23:01   0:00 ps aux
+ns247    124036  0.0  0.0  14224   948 pts/118  RN+  23:01   0:00 grep ns247
+
+Reason:
+ The result directly matches output of bash. 
+
+30. Even more useful pipe statement:
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $ps aux | grep ns247 | grep root
+root      28038  0.0  0.0 101664  1032 ?        Ss   20:17   0:00 sshd: ns247 [priv]
+root      56402  0.0  0.0 101664  1456 ?        Ss   21:10   0:00 sshd: ns247 [priv]
+ns247    120844  0.0  0.0  14224   972 pts/118  SN+  22:54   0:00 grep root
+
+Reason:
+  Result matches bash and shows correct proccesses. 
+
+31. Verifiying Pipes can manage large file/input (>= 65536):
+---------------------------------------
+myShell:/home/ns247/ece551/mp_miniproject $ cat large_file.dat | cat  > large_output.dat
+Program exited with status 0
+myShell:/home/ns247/ece551/mp_miniproject $ls
+commandShell.txt  err_test.txt		  file_list.txt  large_file.dat	 Makefile	myShell      myShell.h	  numerics.txt	README	   #TESTING.txt#  TESTING.txt~	utils.h
+err		  			    err.txt	 hello		        large_output.dat  my_output.txt	  myShell.cpp  myShell_wip  output.txt	  testcases  TESTING.txt	  test.txt	utils.h~
+Program exited with status 0
+
+Reason:
+  Result shows that the pipes are robust in managing large files. The file tested was 65536 byes just larger than what is considered short input.
